@@ -599,7 +599,7 @@ async function checkEntitlement(){
 
 /* ================= Home ================= */
 function mastered(){return Object.values(S.box).filter(b=>b>=3).length;}
-function deckPct(d){const m=d.cards.filter(c=>boxOf(c.id)>=3).length;return Math.round(m/d.cards.length*100);}
+function deckPct(d){const m=d.cards.filter(c=>boxOf(c.id)>=1).length;return Math.round(m/d.cards.length*100);}
 function ringSVG(pct,size,stroke){const r=(size-stroke)/2,C=2*Math.PI*r,off=C*(1-pct/100);
   return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${stroke}"/>
   <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--cinnabar)" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;}
