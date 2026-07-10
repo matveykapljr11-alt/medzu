@@ -496,10 +496,31 @@ body::before{ content:none; background:none; }body::before{ content:none; backgr
         <div class="me-rows">
           <button class="me-row" id="aboutBtn"><span>О языке</span><i>→</i></button>
           <button class="me-row" id="restoreBtn"><span>Восстановить покупку</span><i>→</i></button>
+          <button class="me-row" id="adminRow" style="display:none"><span>Админка</span><i>→</i></button>
           <button class="me-row danger" id="meReset"><span>Сбросить прогресс</span><i>→</i></button>
         </div>
         <div class="credit">Приложение <b>by Pinla Group</b></div>
 
+      </section>
+
+      <!-- ADMIN -->
+      <section class="view" id="v-admin">
+        <div class="sbar">
+          <button class="back" data-home aria-label="Назад"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="title">Админка</div>
+        </div>
+        <div class="stats" style="flex-wrap:wrap;gap:10px">
+          <div class="stat"><div class="num" id="adUsers">—</div><div class="lbl">Юзеров</div></div>
+          <div class="stat"><div class="num red" id="adToday">—</div><div class="lbl">Сегодня</div></div>
+          <div class="stat"><div class="num" id="adWeek">—</div><div class="lbl">За 7 дней</div></div>
+        </div>
+        <div class="stats" style="margin-top:-10px">
+          <div class="stat"><div class="num" id="adNew">—</div><div class="lbl">Новых сегодня</div></div>
+          <div class="stat"><div class="num" id="adVisits">—</div><div class="lbl">Всего заходов</div></div>
+        </div>
+        <div class="section-h">Последние<span style="flex:1"></span></div>
+        <div class="dict-list" id="adRecent"></div>
+        <div class="empty" id="adEmpty">Пока нет данных</div>
       </section>
   </main>
   <nav class="tabbar" id="tabbar">
@@ -846,6 +867,32 @@ const _dc=$('#dictClear'); if(_dc)_dc.onclick=()=>{dictQuery='';$('#dictSearch')
 document.querySelectorAll('.test-btn').forEach(b=>b.onclick=()=>{haptic('light');quizScope(b.dataset.scope);});
 const _mr=$('#meReset'); if(_mr)_mr.onclick=askReset;
 if(script==='cy'){ toggle.classList.add('cy'); toggle.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.s==='cy')); }
+
+
+/* ================= admin / analytics ================= */
+const ADMIN_ID=8364596355;
+const TG_USER = tg?.initDataUnsafe?.user || null;
+const isAdmin = TG_USER && TG_USER.id===ADMIN_ID;
+async function track(){ if(!CFG.API||!initData) return;
+  try{ await fetch(CFG.API+'/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})}); }catch(e){} }
+async function renderAdmin(){
+  const set=(id,v)=>{const e=$('#'+id); if(e)e.textContent=v;};
+  if(!CFG.API||!initData){ set('adUsers','—'); $('#adEmpty').textContent='Нужен воркер (CFG.API пуст)'; $('#adEmpty').classList.add('on'); return; }
+  set('adUsers','…');
+  try{
+    const r=await fetch(CFG.API+'/stats',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData})});
+    if(r.status===403){ $('#adEmpty').textContent='Доступ только для админа'; $('#adEmpty').classList.add('on'); return; }
+    const j=await r.json();
+    set('adUsers',j.users); set('adToday',j.today); set('adWeek',j.week); set('adNew',j.newToday); set('adVisits',j.visits);
+    const box=$('#adRecent'); box.innerHTML=(j.recent||[]).map(u=>
+      '<div class="dword"><div class="dw-l"><span class="dw-w" style="font-size:15px">'+(u.name?('@'+u.name):('id '+u.id))+'</span>'
+      +'<span class="dw-a" style="font-style:normal">заходов: '+u.visits+' · с '+u.first+'</span></div>'
+      +'<span class="dw-r">'+u.last+'</span></div>').join('');
+    $('#adEmpty').classList.toggle('on', !(j.recent&&j.recent.length));
+  }catch(e){ $('#adEmpty').textContent='Ошибка загрузки'; $('#adEmpty').classList.add('on'); }
+}
+if(isAdmin){ const ar=$('#adminRow'); if(ar){ ar.style.display=''; ar.onclick=()=>{haptic('light'); show('admin'); renderAdmin();}; } }
+track();
 
 nav('home');
 checkEntitlement();
